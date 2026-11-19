@@ -13,8 +13,12 @@
   <!-- Tailwind CSS v3 vía CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Librería QRCode.js vía CDN para generar códigos QR reales y escaneables -->
+  <!-- Librería QRCode.js vía CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Firebase App y Firestore (Compat SDK para mantener todo en un solo HTML) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
   <!-- Configuración personalizada de Tailwind -->
   <script>
@@ -97,7 +101,6 @@
       scroll-behavior: smooth;
     }
 
-    /* Fondo ambiental sutil para escritorio */
     .desktop-ambient-bg {
       background-color: #050814;
       background-image:
@@ -106,7 +109,6 @@
         radial-gradient(circle at 50% 45%, rgba(197, 160, 89, 0.08), transparent 55%);
     }
 
-    /* Efecto hover 3D suave para tarjetas interactivas */
     .card-3d {
       transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, border-color 0.28s ease;
       transform-style: preserve-3d;
@@ -115,14 +117,12 @@
       transform: translateY(-3px) scale(1.012);
     }
 
-    /* Centrado perfecto del QR generado por qrcodejs */
     #qr-code-container img,
     #qr-code-container canvas {
       margin: 0 auto !important;
       border-radius: 8px;
     }
 
-    /* Scrollbar discreta */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -138,20 +138,15 @@
 </head>
 <body class="desktop-ambient-bg text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
 
-  <!-- ===================================================================== -->
-  <!-- NOTIFICACIÓN FLOTANTE (TOAST) PARA COPIAR / ACCIONES RÁPIDAS          -->
-  <!-- ===================================================================== -->
+  <!-- NOTIFICACIÓN FLOTANTE (TOAST) -->
   <div id="toast-notification" class="fixed bottom-5 right-5 z-[70] hidden items-center gap-2.5 px-4 py-3 rounded-2xl bg-slate-900/95 border border-emerald-400/40 text-emerald-200 text-xs font-semibold shadow-2xl backdrop-blur-md animate-scale-in">
     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
     <span id="toast-message">Acción completada</span>
   </div>
 
-  <!-- ===================================================================== -->
-  <!-- BARRA SUPERIOR FIJA DE NAVEGACIÓN (IA MAKERS PORTFOLIO)               -->
-  <!-- ===================================================================== -->
+  <!-- BARRA SUPERIOR FIJA DE NAVEGACIÓN (IA MAKERS PORTFOLIO) -->
   <header class="sticky top-0 z-40 w-full backdrop-blur-xl bg-night-950/85 border-b border-white/10 shadow-lg">
     <div class="max-w-5xl mx-auto px-3 sm:px-6 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-2.5">
-      <!-- Identidad de marca IA MAKERS -->
       <div class="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-start">
         <div class="flex items-center gap-2.5">
           <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 via-indigo-600 to-cyan-500 p-[1.5px] shadow-md shadow-violet-500/25 flex-shrink-0">
@@ -171,14 +166,12 @@
           </div>
         </div>
 
-        <!-- Contador rápido en móvil -->
         <button onclick="switchView('access')" class="sm:hidden flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="nav-guest-count-mobile">3</span> Pases
+          <span id="nav-guest-count-mobile">0</span> Pases
         </button>
       </div>
 
-      <!-- Selector de las 3 vistas -->
       <nav aria-label="Selector de demos" class="w-full sm:w-auto grid grid-cols-3 sm:flex items-center gap-1.5 bg-white/5 p-1 rounded-2xl border border-white/10">
         <button id="tab-birthday" onclick="switchView('birthday')" class="tab-btn flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer">
           <span>🎂</span>
@@ -193,37 +186,30 @@
         <button id="tab-access" onclick="switchView('access')" class="tab-btn flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer">
           <span>📱</span>
           <span class="truncate">Control QR</span>
-          <span id="nav-guest-count-desktop" class="hidden sm:inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">3</span>
+          <span id="nav-guest-count-desktop" class="hidden sm:inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">0</span>
         </button>
       </nav>
     </div>
   </header>
 
-  <!-- ===================================================================== -->
-  <!-- CONTENEDOR PRINCIPAL                                                  -->
-  <!-- ===================================================================== -->
+  <!-- CONTENEDOR PRINCIPAL -->
   <main class="flex-1 w-full flex flex-col items-center justify-start sm:py-8 sm:px-4">
 
     <!-- =================================================================== -->
     <!-- VISTA 1: DEMO CUMPLEAÑOS VIP (DIEGO — EDICIÓN 25)                   -->
     <!-- =================================================================== -->
     <section id="view-birthday" class="view-section w-full sm:max-w-[435px] sm:rounded-[2.5rem] sm:border-[6px] sm:border-slate-800/90 sm:shadow-[0_25px_70px_-15px_rgba(0,0,0,0.85),0_0_45px_rgba(139,92,246,0.22)] overflow-hidden relative bg-night-950 transition-all duration-300">
-
-      <!-- Canvas animado de partículas/luces cálidas flotantes -->
       <canvas id="vip-particles-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-85"></canvas>
 
-      <!-- Dynamic Island en escritorio -->
       <div class="hidden sm:flex justify-center pt-3 pb-1 bg-transparent absolute top-0 inset-x-0 z-20 pointer-events-none">
         <div class="w-24 h-5 bg-black rounded-full border border-white/10"></div>
       </div>
 
       <div class="relative z-10 px-6 pt-12 sm:pt-14 pb-10 bg-gradient-to-b from-[#0C102B]/80 via-[#080B1D]/85 to-[#050712]/95">
-        <!-- Halos de luz neón -->
         <div class="absolute -top-16 -left-16 w-56 h-56 bg-purple-600/25 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute top-24 -right-16 w-52 h-52 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute bottom-24 -left-12 w-56 h-56 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
-        <!-- Guirnalda de luces cálidas SVG -->
         <div class="absolute top-0 inset-x-0 flex justify-center opacity-90 pointer-events-none">
           <svg class="w-full max-w-[420px] h-16" viewBox="0 0 400 70" fill="none">
             <path d="M-10 8 Q 100 52 200 18 Q 300 52 410 8" stroke="rgba(253,224,71,0.38)" stroke-width="1.2" fill="none"/>
@@ -239,9 +225,7 @@
           </svg>
         </div>
 
-        <!-- Contenido Hero -->
         <div class="relative z-10 text-center animate-fade-up">
-          <!-- Corona Dorada con brillo animado -->
           <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-b from-amber-400/25 to-amber-600/5 border border-amber-400/40 shadow-lg shadow-amber-500/20 mb-4 animate-float-slow">
             <svg class="w-9 h-9 text-amber-300 animate-crown-shine" viewBox="0 0 24 24" fill="currentColor">
               <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
@@ -256,7 +240,6 @@
             Cumpleaños!
           </h1>
 
-          <!-- Nombre del festejado -->
           <div class="mt-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/15 border border-purple-400/35 shadow-inner">
             <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
             <span id="bday-host" class="font-display font-bold text-sm tracking-wide text-white">Diego — Edición 25</span>
@@ -266,7 +249,6 @@
             Ven a celebrar una noche inolvidable con buena música, bebidas y la mejor compañía.
           </p>
 
-          <!-- Cuenta Regresiva en Tiempo Real -->
           <div class="mt-6">
             <p class="text-[11px] uppercase tracking-[0.22em] text-slate-400 font-semibold mb-2.5">Faltan solo</p>
             <div class="grid grid-cols-4 gap-2">
@@ -289,7 +271,6 @@
             </div>
           </div>
 
-          <!-- Tarjeta Glassmorphism 3D: Fecha y Hora -->
           <div class="card-3d mt-6 rounded-2xl bg-gradient-to-r from-amber-500/10 via-white/[0.05] to-purple-500/10 border border-amber-400/30 p-4 backdrop-blur-md">
             <div class="grid grid-cols-2 divide-x divide-white/10 items-center">
               <div class="pr-3 text-center">
@@ -313,7 +294,6 @@
             </div>
           </div>
 
-          <!-- Tarjeta Glassmorphism 3D: Ubicación + Google Maps -->
           <div class="card-3d mt-4 rounded-2xl bg-white/[0.05] border border-white/10 p-4 text-left flex items-center justify-between gap-3 backdrop-blur-md">
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 flex-shrink-0 mt-0.5">
@@ -335,7 +315,6 @@
             </a>
           </div>
 
-          <!-- Tarjeta Interactiva: Código de Vestimenta (expandible) -->
           <div onclick="toggleDressCodeTip('bday-dress-tip')" class="card-3d mt-4 rounded-2xl bg-white/[0.05] border border-white/10 hover:border-purple-400/40 p-4 text-left backdrop-blur-md cursor-pointer">
             <div class="flex items-center justify-between gap-3">
               <div class="flex items-center gap-3">
@@ -357,7 +336,6 @@
             </div>
           </div>
 
-          <!-- Botón Destacado RSVP Verde Esmeralda -->
           <div class="mt-7">
             <button onclick="openRsvpModal('birthday')" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-night-950 font-display font-extrabold text-base tracking-wide shadow-lg animate-pulse-glow transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2.5 cursor-pointer">
               <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -372,7 +350,6 @@
           </div>
         </div>
 
-        <!-- Pie de página IA MAKERS -->
         <footer class="relative z-10 mt-10 pt-5 border-t border-white/10 text-center">
           <p class="text-[11px] text-slate-400 tracking-wide">
             Creado por <span class="font-display font-bold text-white">IA MAKERS</span> • Piensa diferente. Construye inteligente.
@@ -385,14 +362,11 @@
     <!-- VISTA 2: DEMO BODA ELEGANTE (SOFÍA & ALEJANDRO)                     -->
     <!-- =================================================================== -->
     <section id="view-wedding" class="view-section hidden w-full sm:max-w-[435px] sm:rounded-[2.5rem] sm:border-[6px] sm:border-stone-800/80 sm:shadow-[0_25px_70px_-15px_rgba(0,0,0,0.75),0_0_45px_rgba(197,160,89,0.22)] overflow-hidden relative bg-champagne-50 text-stone-800 transition-all duration-300">
-
-      <!-- Dynamic Island en escritorio -->
       <div class="hidden sm:flex justify-center pt-3 pb-1 absolute top-0 inset-x-0 z-20 pointer-events-none">
         <div class="w-24 h-5 bg-stone-900 rounded-full"></div>
       </div>
 
       <div class="relative px-6 pt-12 sm:pt-14 pb-10 bg-gradient-to-b from-[#FAF8F4] via-[#F7F3EA] to-[#F3EDE0]">
-        <!-- Ornamento botánico superior SVG -->
         <div class="flex justify-center mb-3 opacity-85">
           <svg class="w-28 h-10 text-olive-600" viewBox="0 0 120 40" fill="none" stroke="currentColor" stroke-width="1.2">
             <path d="M10 25 Q 35 10 60 20 Q 85 10 110 25" stroke-linecap="round"/>
@@ -402,7 +376,6 @@
           </svg>
         </div>
 
-        <!-- Hero Editorial -->
         <div class="text-center animate-fade-up">
           <p class="text-[11px] uppercase tracking-[0.32em] text-olive-600 font-semibold">
             Nos Casamos
@@ -422,7 +395,6 @@
             Con la bendición de nuestras familias, queremos compartir contigo el inicio de nuestra historia para siempre.
           </p>
 
-          <!-- Aviso Destacado: Mesa por WhatsApp al escanear QR -->
           <div class="card-3d mt-5 rounded-2xl bg-gradient-to-r from-olive-600/10 via-champagne-100 to-champagne-200/50 border border-champagne-500/40 p-3.5 text-left flex items-start gap-3 shadow-sm">
             <div class="w-9 h-9 rounded-xl bg-olive-600 text-white flex items-center justify-center flex-shrink-0 text-base shadow-sm">
               📲
@@ -435,7 +407,6 @@
             </div>
           </div>
 
-          <!-- Fecha y Lugar -->
           <div class="card-3d mt-5 py-4 px-5 rounded-2xl bg-white/85 border border-champagne-200 shadow-sm">
             <p id="wed-date-text" class="font-serif text-xl font-semibold text-stone-800">14 de Febrero, 2027</p>
             <p id="wed-time-text" class="text-xs uppercase tracking-[0.2em] text-champagne-700 font-semibold mt-1">5:00 PM • Ceremonia</p>
@@ -451,7 +422,6 @@
             </a>
           </div>
 
-          <!-- Cuenta Regresiva Elegante -->
           <div class="mt-6">
             <p class="text-[11px] uppercase tracking-[0.24em] text-stone-500 font-semibold mb-2.5">Cuenta Regresiva</p>
             <div class="grid grid-cols-4 gap-2">
@@ -474,20 +444,15 @@
             </div>
           </div>
 
-          <!-- Itinerario Visual Interactivo -->
           <div class="mt-7 text-left rounded-2xl bg-white/85 border border-champagne-200 p-5 shadow-sm">
             <div class="text-center mb-4">
               <p class="text-[10px] uppercase tracking-[0.26em] text-olive-600 font-semibold">Programa del Día</p>
               <h2 class="font-serif text-xl font-semibold text-stone-800">Itinerario</h2>
             </div>
-            <div id="wed-itinerary-list" class="relative space-y-4 pl-6 before:content-[''] before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-[1.5px] before:bg-champagne-200">
-              <!-- Se rellena dinámicamente desde EVENTS_CONFIG -->
-            </div>
+            <div id="wed-itinerary-list" class="relative space-y-4 pl-6 before:content-[''] before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-[1.5px] before:bg-champagne-200"></div>
           </div>
 
-          <!-- Código de Vestimenta + Mesa de Regalos Interactiva -->
           <div class="mt-4 grid grid-cols-1 gap-3 text-left">
-            <!-- Dress Code -->
             <div class="card-3d rounded-2xl bg-white/85 border border-champagne-200 p-4 flex items-start gap-3 shadow-sm">
               <div class="w-10 h-10 rounded-xl bg-olive-600/10 text-olive-700 flex items-center justify-center flex-shrink-0">
                 <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -501,7 +466,6 @@
               </div>
             </div>
 
-            <!-- Mesa de Regalos Interactiva -->
             <div class="card-3d rounded-2xl bg-white/85 border border-champagne-200 p-4 shadow-sm">
               <div class="flex items-start gap-3">
                 <div class="w-10 h-10 rounded-xl bg-champagne-500/15 text-champagne-700 flex items-center justify-center flex-shrink-0">
@@ -526,7 +490,6 @@
             </div>
           </div>
 
-          <!-- Botón de Confirmación RSVP Elegante -->
           <div class="mt-7">
             <button onclick="openRsvpModal('wedding')" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-champagne-600 via-champagne-500 to-champagne-600 hover:from-champagne-700 hover:to-champagne-600 text-white font-display font-bold text-sm uppercase tracking-[0.14em] shadow-md shadow-champagne-600/25 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2.5 cursor-pointer">
               <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -541,7 +504,6 @@
           </div>
         </div>
 
-        <!-- Pie de página IA MAKERS -->
         <footer class="mt-10 pt-5 border-t border-champagne-200 text-center">
           <p class="text-[11px] text-stone-500 tracking-wide">
             Creado por <span class="font-display font-bold text-stone-700">IA MAKERS</span> • Piensa diferente. Construye inteligente.
@@ -551,18 +513,17 @@
     </section>
 
     <!-- =================================================================== -->
-    <!-- VISTA 3: CONTROL DE ACCESO EN PUERTA (ESCÁNER LÁSER + WHATSAPP)     -->
+    <!-- VISTA 3: CONTROL DE ACCESO EN PUERTA (TIEMPO REAL CON FIREBASE)     -->
     <!-- =================================================================== -->
     <section id="view-access" class="view-section hidden w-full max-w-3xl px-4 sm:px-0 pb-12 animate-fade-up">
       <div class="rounded-3xl bg-night-900/95 border border-white/10 shadow-2xl overflow-hidden backdrop-blur-xl">
 
-        <!-- Cabecera del Panel de Seguridad -->
         <div class="p-6 sm:p-8 bg-gradient-to-r from-indigo-950/90 via-night-900 to-emerald-950/40 border-b border-white/10">
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
-              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold mb-2.5">
+              <div id="cloud-status-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold mb-2.5">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Sistema de Recepción en Vivo
+                <span id="cloud-status-text">Conectando a la nube...</span>
               </div>
               <h1 class="font-display font-extrabold text-2xl sm:text-3xl text-white">Control de Acceso QR</h1>
               <p class="text-sm text-slate-300 mt-1">
@@ -575,7 +536,6 @@
             </button>
           </div>
 
-          <!-- Métricas en vivo -->
           <div class="mt-6 grid grid-cols-3 gap-3">
             <div class="rounded-2xl bg-white/[0.04] border border-white/10 p-3.5 text-center">
               <p id="stat-total-guests" class="font-display font-extrabold text-2xl text-white">0</p>
@@ -591,16 +551,12 @@
             </div>
           </div>
 
-          <!-- Simulador Visual de Escáner Láser QR + Entrada Manual -->
           <div class="mt-6 grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-            <!-- Visor láser animado -->
             <div id="laser-scanner-box" class="sm:col-span-4 relative h-28 rounded-2xl bg-night-950 border border-emerald-500/30 overflow-hidden flex flex-col items-center justify-center p-3">
-              <!-- Esquinas de visor -->
               <span class="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-emerald-400 rounded-tl"></span>
               <span class="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-emerald-400 rounded-tr"></span>
               <span class="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-emerald-400 rounded-bl"></span>
               <span class="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-emerald-400 rounded-br"></span>
-              <!-- Línea láser -->
               <div id="laser-beam" class="absolute left-3 right-3 h-0.5 bg-emerald-400 shadow-[0_0_12px_#34d399,0_0_24px_#10b981] animate-laser-scan"></div>
               <svg class="w-10 h-10 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zm4 4h3v3h-3zm0-4h3m-4 4v3"/>
@@ -608,7 +564,6 @@
               <span id="laser-status-text" class="text-[10px] font-mono uppercase tracking-widest text-emerald-300/90 mt-1">Escáner Listo</span>
             </div>
 
-            <!-- Campo de escaneo manual -->
             <form id="manual-scan-form" onsubmit="handleManualScan(event)" class="sm:col-span-8 space-y-2.5">
               <div class="relative">
                 <input id="manual-pass-input" type="text" placeholder="Código de pase (ej. IAM-2027-2088)" class="w-full px-4 py-3 rounded-xl bg-night-950/90 border border-white/15 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 outline-none text-sm text-white placeholder-slate-500 uppercase font-mono" />
@@ -620,13 +575,10 @@
           </div>
         </div>
 
-        <!-- Tarjeta de Resultado de Escaneo (Se muestra al validar un QR) -->
         <div id="scan-feedback-area" class="hidden px-6 sm:px-8 pt-6"></div>
 
-        <!-- Barra de Búsqueda + Filtros + Lista de Invitados -->
         <div class="p-6 sm:p-8">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-            <!-- Buscador -->
             <div class="relative flex-1 max-w-xs">
               <input id="guest-search-input" type="text" oninput="renderAccessDashboard()" placeholder="Buscar invitado, teléfono o mesa..." class="w-full pl-9 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 focus:border-cyan-400 outline-none text-xs text-white placeholder-slate-400" />
               <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -634,7 +586,6 @@
               </svg>
             </div>
 
-            <!-- Filtros por evento -->
             <div class="flex items-center gap-1.5 bg-white/5 p-1 rounded-xl border border-white/10 self-start sm:self-auto">
               <button onclick="setAccessFilter('all')" id="filter-all" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">Todos</button>
               <button onclick="setAccessFilter('wedding')" id="filter-wedding" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">💍 Boda</button>
@@ -645,7 +596,6 @@
           <div id="guest-list-container" class="space-y-3"></div>
         </div>
 
-        <!-- Pie del panel -->
         <div class="px-6 py-4 bg-night-950/60 border-t border-white/10 text-center">
           <p class="text-xs text-slate-400">
             Tecnología de control de acceso por <span class="font-display font-bold text-white">IA MAKERS</span> • Piensa diferente. Construye inteligente.
@@ -661,7 +611,6 @@
   <div id="rsvp-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
     <div id="rsvp-modal-card" class="relative w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-scale-in my-auto border">
 
-      <!-- Botón cerrar -->
       <button onclick="closeRsvpModal()" aria-label="Cerrar ventana" class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-black/15 hover:bg-black/25">
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
           <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
@@ -677,20 +626,34 @@
         </div>
 
         <form id="rsvp-form" onsubmit="handleRsvpSubmit(event)" class="mt-5 space-y-4">
-          <!-- Nombre completo -->
           <div>
             <label for="rsvp-name" class="block text-xs font-semibold uppercase tracking-wider mb-1.5 opacity-85">Nombre completo *</label>
             <input id="rsvp-name" type="text" required minlength="2" maxlength="60" placeholder="Ej. Mariana López" class="rsvp-input w-full px-4 py-3 rounded-xl text-sm outline-none transition-all border" />
           </div>
 
-          <!-- WhatsApp a 10 dígitos (Obligatorio) -->
+          <!-- WhatsApp Internacional con Selector de País -->
           <div>
-            <label for="rsvp-phone" class="block text-xs font-semibold uppercase tracking-wider mb-1.5 opacity-85">WhatsApp (10 dígitos) *</label>
-            <input id="rsvp-phone" type="tel" required maxlength="10" inputmode="numeric" placeholder="Ej. 9981234567" class="rsvp-input w-full px-4 py-3 rounded-xl text-sm outline-none transition-all border font-mono" />
-            <p id="rsvp-phone-hint" class="text-[11px] opacity-75 mt-1">En la boda te enviaremos tu número de mesa a este WhatsApp al entrar.</p>
+            <label for="rsvp-phone" class="block text-xs font-semibold uppercase tracking-wider mb-1.5 opacity-85">WhatsApp (Internacional) *</label>
+            <div class="flex gap-2">
+              <select id="rsvp-country-code" aria-label="Código de país" class="rsvp-input w-28 px-2.5 py-3 rounded-xl text-sm outline-none transition-all border font-semibold flex-shrink-0 cursor-pointer">
+                <option value="52" selected>🇲🇽 +52</option>
+                <option value="34">🇪🇸 +34</option>
+                <option value="1">🇺🇸 +1</option>
+                <option value="57">🇨🇴 +57</option>
+                <option value="54">🇦🇷 +54</option>
+                <option value="56">🇨🇱 +56</option>
+                <option value="51">🇵🇪 +51</option>
+                <option value="44">🇬🇧 +44</option>
+                <option value="33">🇫🇷 +33</option>
+                <option value="49">🇩🇪 +49</option>
+                <option value="39">🇮🇹 +39</option>
+                <option value="55">🇧🇷 +55</option>
+              </select>
+              <input id="rsvp-phone" type="tel" required minlength="7" maxlength="15" inputmode="numeric" placeholder="Número sin prefijo" class="rsvp-input flex-1 min-w-0 px-4 py-3 rounded-xl text-sm outline-none transition-all border font-mono" />
+            </div>
+            <p id="rsvp-phone-hint" class="text-[11px] opacity-75 mt-1">Acepta números de México y el extranjero (7 a 15 dígitos).</p>
           </div>
 
-          <!-- Número de pases (1 a 4) -->
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider mb-1.5 opacity-85">Número de pases *</label>
             <div class="grid grid-cols-4 gap-2" id="passes-selector">
@@ -702,16 +665,13 @@
             <input type="hidden" id="rsvp-passes" value="2" />
           </div>
 
-          <!-- Mensaje opcional -->
           <div>
             <label for="rsvp-message" class="block text-xs font-semibold uppercase tracking-wider mb-1.5 opacity-85">Mensaje para los anfitriones (opcional)</label>
             <textarea id="rsvp-message" rows="2" maxlength="140" placeholder="¡Ahí nos vemos! Qué emoción celebrar juntos..." class="rsvp-input w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all border resize-none"></textarea>
           </div>
 
-          <!-- Error de validación inline -->
           <p id="rsvp-error" class="hidden text-xs font-semibold text-rose-500"></p>
 
-          <!-- Botón Generar Pase -->
           <button id="rsvp-submit-btn" type="submit" class="w-full py-3.5 px-5 rounded-xl font-display font-bold text-sm tracking-wide transition-all active:scale-[0.98] cursor-pointer shadow-lg flex items-center justify-center gap-2">
             <span>Generar mi Pase Digital QR</span>
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -724,10 +684,8 @@
       <!-- PASO 2: PASE DIGITAL DE ACCESO ESTILO GAFETE VIP -->
       <div id="rsvp-step-pass" class="hidden p-6 sm:p-7">
         <div class="relative rounded-3xl bg-white text-slate-900 p-5 shadow-xl border border-slate-200 overflow-hidden">
-          <!-- Orificio decorativo de gafete -->
           <div class="w-12 h-2.5 bg-slate-200 rounded-full mx-auto mb-4 shadow-inner"></div>
 
-          <!-- Encabezado del gafete -->
           <div class="text-center">
             <span id="pass-event-badge" class="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-slate-900 text-white mb-2">
               Evento VIP
@@ -736,13 +694,11 @@
             <p id="pass-event-date" class="text-xs text-slate-500 mt-0.5">Fecha y Hora</p>
           </div>
 
-          <!-- Separador tipo boleto -->
           <div class="my-4 border-t border-dashed border-slate-300 relative">
             <span class="w-5 h-5 rounded-full bg-night-950/90 absolute -left-8 -top-2.5"></span>
             <span class="w-5 h-5 rounded-full bg-night-950/90 absolute -right-8 -top-2.5"></span>
           </div>
 
-          <!-- Datos del invitado -->
           <div class="flex items-center justify-between gap-2 bg-slate-50 rounded-2xl p-3 border border-slate-100">
             <div class="min-w-0">
               <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Invitado</p>
@@ -755,7 +711,6 @@
             </div>
           </div>
 
-          <!-- Contenedor del Código QR Real -->
           <div class="mt-4 flex flex-col items-center">
             <div class="p-3 bg-white rounded-2xl border-2 border-slate-100 shadow-sm">
               <div id="qr-code-container" class="w-[156px] h-[156px] flex items-center justify-center"></div>
@@ -763,7 +718,6 @@
             <p id="pass-code-text" class="mt-2.5 font-mono font-bold text-xs tracking-widest text-slate-500">IAM-2026-0000</p>
           </div>
 
-          <!-- Etiqueta ACCESO AUTORIZADO -->
           <div class="mt-4 py-2 px-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center gap-2 text-emerald-700">
             <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
@@ -772,7 +726,6 @@
           </div>
         </div>
 
-        <!-- Botones de acción posteriores -->
         <div class="mt-4 space-y-2.5">
           <button onclick="goToAccessControlWithPass()" class="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-night-950 font-display font-bold text-xs sm:text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer shadow-md">
             <span>📷 Probar Escaneo en Control de Acceso</span>
@@ -788,14 +741,31 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- LÓGICA DE LA APLICACIÓN (EVENTS_CONFIG + ES6 + LOCALSTORAGE + QR)     -->
+  <!-- LÓGICA DE LA APLICACIÓN (FIREBASE FIRESTORE EN TIEMPO REAL + QR)      -->
   <!-- ===================================================================== -->
   <script>
     /**
      * =========================================================================
+     * 0. CONFIGURACIÓN DE FIREBASE (PEGA AQUÍ TUS CREDENCIALES DEL PASO 1)
+     * =========================================================================
+     */
+    const firebaseConfig = {
+      apiKey: "AIzaSyCspgWLY_Dzb82s6qjR7aIqlK2Njhq3Rs0",
+      authDomain: "ia-makers-invitaciones.firebaseapp.com",
+      projectId: "ia-makers-invitaciones",
+      storageBucket: "ia-makers-invitaciones.firebasestorage.app",
+      messagingSenderId: "443747768805",
+      appId: "1:443747768805:web:8471194dcb247790e2f70c"
+    };
+
+    const FIRESTORE_COLLECTION = 'invitados_demo';
+    let db = null;
+    let isCloudConnected = false;
+    let hasCheckedInitialSeed = false;
+
+    /**
+     * =========================================================================
      * 1. CONFIGURACIÓN CENTRALIZADA DE EVENTOS (EVENTS_CONFIG)
-     * -------------------------------------------------------------------------
-     * Edita únicamente este objeto para adaptar las invitaciones a clientes.
      * =========================================================================
      */
     const EVENTS_CONFIG = {
@@ -837,21 +807,20 @@
       }
     };
 
-    const STORAGE_KEY = 'ia_makers_invitaciones_v2';
+    const STORAGE_KEY = 'ia_makers_invitaciones_v3';
 
-    /**
-     * 3 invitados precargados (2 de Boda con WhatsApp y Mesa, 1 de Cumpleaños)
-     */
     const DEFAULT_GUESTS = [
       {
         passId: 'IAM-2027-2088',
         eventId: 'wedding',
         name: 'Valeria & Roberto Torres',
+        countryCode: '52',
         phone: '9982145011',
         passes: 2,
         table: 'Mesa 4',
         message: '¡Qué emoción acompañarlos en su gran día!',
-        createdAt: 'Hoy, 6:40 PM',
+        createdAt: 'Ejemplo precargado',
+        createdAtMs: 1700000003000,
         checkedIn: false,
         checkedInAt: null
       },
@@ -859,11 +828,13 @@
         passId: 'IAM-2027-3194',
         eventId: 'wedding',
         name: 'Sofía Martínez & Familia',
-        phone: '9981234567',
+        countryCode: '34',
+        phone: '612345678',
         passes: 3,
         table: 'Mesa 7',
-        message: 'Nos vemos en la Riviera Maya 🥂',
-        createdAt: 'Hoy, 7:15 PM',
+        message: 'Nos vemos en la Riviera Maya',
+        createdAt: 'Ejemplo precargado',
+        createdAtMs: 1700000002000,
         checkedIn: false,
         checkedInAt: null
       },
@@ -871,11 +842,13 @@
         passId: 'IAM-2026-1042',
         eventId: 'birthday',
         name: 'Carlos Mendoza',
+        countryCode: '52',
         phone: '9987654321',
         passes: 2,
         table: null,
         message: '¡Feliz cumple Diego! Listos para celebrar.',
-        createdAt: 'Hoy, 7:30 PM',
+        createdAt: 'Ejemplo precargado',
+        createdAtMs: 1700000001000,
         checkedIn: false,
         checkedInAt: null
       }
@@ -883,7 +856,7 @@
 
     /**
      * =========================================================================
-     * 2. ESTADO DE LA APLICACIÓN (Map + localStorage)
+     * 2. ESTADO + CONEXIÓN EN TIEMPO REAL CON FIREBASE FIRESTORE
      * =========================================================================
      */
     const guestsMap = new Map();
@@ -892,7 +865,78 @@
     let currentAccessFilter = 'all';
     let lastGeneratedPassId = null;
 
-    function loadGuestsFromStorage() {
+    function updateCloudBadge(connected, label) {
+      const badge = document.getElementById('cloud-status-badge');
+      const textEl = document.getElementById('cloud-status-text');
+      if (!badge || !textEl) return;
+      textEl.textContent = label;
+      if (connected) {
+        badge.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold mb-2.5';
+      } else {
+        badge.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold mb-2.5';
+      }
+    }
+
+    function initDatabase() {
+      const hasValidConfig = firebaseConfig.apiKey && !firebaseConfig.apiKey.includes('PEGA_AQUI');
+
+      if (hasValidConfig && typeof firebase !== 'undefined') {
+        try {
+          if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+          }
+          db = firebase.firestore();
+          isCloudConnected = true;
+          updateCloudBadge(true, 'Sincronizado en Tiempo Real (Firebase)');
+
+          // Escuchar cambios en vivo desde cualquier celular del mundo
+          db.collection(FIRESTORE_COLLECTION)
+            .orderBy('createdAtMs', 'desc')
+            .onSnapshot(async (snapshot) => {
+              if (snapshot.empty && !hasCheckedInitialSeed) {
+                hasCheckedInitialSeed = true;
+                await seedDefaultGuestsToCloud();
+                return;
+              }
+              hasCheckedInitialSeed = true;
+
+              guestsMap.clear();
+              snapshot.forEach((doc) => {
+                const data = doc.data();
+                guestsMap.set(doc.id, { ...data, passId: doc.id });
+              });
+
+              updateNavBadges();
+              if (activeView === 'access') renderAccessDashboard();
+            }, (err) => {
+              console.error('Error Firestore:', err);
+              updateCloudBadge(false, 'Error de conexión (Modo local)');
+              isCloudConnected = false;
+              loadGuestsFromLocalFallback();
+            });
+          return;
+        } catch (err) {
+          console.error('Error iniciando Firebase:', err);
+        }
+      }
+
+      // Respaldo local si aún no se pegan las credenciales de Firebase
+      isCloudConnected = false;
+      updateCloudBadge(false, 'Modo Local (Falta pegar firebaseConfig)');
+      loadGuestsFromLocalFallback();
+    }
+
+    async function seedDefaultGuestsToCloud() {
+      if (!db) return;
+      const batch = db.batch();
+      DEFAULT_GUESTS.forEach((g) => {
+        const ref = db.collection(FIRESTORE_COLLECTION).doc(g.passId);
+        batch.set(ref, g);
+      });
+      await batch.commit();
+    }
+
+    function loadGuestsFromLocalFallback() {
       guestsMap.clear();
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -901,30 +945,78 @@
       } catch (e) {
         DEFAULT_GUESTS.forEach((g) => guestsMap.set(g.passId, { ...g }));
       }
-    }
-
-    function saveGuestsToStorage() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(guestsMap.values())));
-      } catch (e) {
-        // Silencioso si localStorage no está disponible
-      }
       updateNavBadges();
+      if (activeView === 'access') renderAccessDashboard();
     }
 
-    function resetDemoData() {
-      guestsMap.clear();
-      DEFAULT_GUESTS.forEach((g) => guestsMap.set(g.passId, { ...g }));
-      saveGuestsToStorage();
+    async function persistNewGuest(guest) {
+      guestsMap.set(guest.passId, guest);
+      updateNavBadges();
+
+      if (isCloudConnected && db) {
+        try {
+          await db.collection(FIRESTORE_COLLECTION).doc(guest.passId).set(guest);
+        } catch (err) {
+          console.error('Error guardando invitado:', err);
+          showToast('Error al guardar en la nube');
+        }
+      } else {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(guestsMap.values())));
+      }
+    }
+
+    async function persistCheckIn(passId, checkInTime) {
+      const guest = guestsMap.get(passId);
+      if (guest) {
+        guest.checkedIn = true;
+        guest.checkedInAt = checkInTime;
+      }
+
+      if (isCloudConnected && db) {
+        try {
+          await db.collection(FIRESTORE_COLLECTION).doc(passId).update({
+            checkedIn: true,
+            checkedInAt: checkInTime
+          });
+        } catch (err) {
+          console.error('Error actualizando check-in:', err);
+        }
+      } else {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(guestsMap.values())));
+      }
+    }
+
+    async function resetDemoData() {
       document.getElementById('scan-feedback-area').classList.add('hidden');
       document.getElementById('guest-search-input').value = '';
-      renderAccessDashboard();
-      showToast('Datos del demo reiniciados');
+
+      if (isCloudConnected && db) {
+        try {
+          const snapshot = await db.collection(FIRESTORE_COLLECTION).get();
+          const batch = db.batch();
+          snapshot.forEach((doc) => batch.delete(doc.ref));
+          DEFAULT_GUESTS.forEach((g) => {
+            batch.set(db.collection(FIRESTORE_COLLECTION).doc(g.passId), g);
+          });
+          await batch.commit();
+          showToast('Demo reiniciado en la nube');
+        } catch (err) {
+          console.error('Error reiniciando:', err);
+          showToast('No se pudo reiniciar en Firebase');
+        }
+      } else {
+        guestsMap.clear();
+        DEFAULT_GUESTS.forEach((g) => guestsMap.set(g.passId, { ...g }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(guestsMap.values())));
+        updateNavBadges();
+        renderAccessDashboard();
+        showToast('Datos del demo reiniciados');
+      }
     }
 
     /**
      * =========================================================================
-     * 3. UTILIDADES UI (TOAST, COPIAR AL PORTAPAPELES, ESCAPE HTML)
+     * 3. UTILIDADES UI
      * =========================================================================
      */
     let toastTimer = null;
@@ -997,8 +1089,7 @@
             r: Math.random() * 2.2 + 0.8,
             vy: -(Math.random() * 0.45 + 0.15),
             vx: (Math.random() - 0.5) * 0.25,
-            color: colors[i % colors.length],
-            alpha: Math.random() * 0.6 + 0.3
+            color: colors[i % colors.length]
           });
         }
       };
@@ -1105,7 +1196,7 @@
 
     /**
      * =========================================================================
-     * 7. FLUJO RSVP + ASIGNACIÓN DE MESA + PASE DIGITAL CON QR REAL
+     * 7. FLUJO RSVP INTERNACIONAL + PASE DIGITAL CON QR REAL
      * =========================================================================
      */
     function openRsvpModal(eventId) {
@@ -1128,18 +1219,20 @@
         document.getElementById('modal-event-title').className = 'font-display text-2xl font-extrabold leading-tight text-white';
         submitBtn.className = 'w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-night-950 font-display font-extrabold text-sm tracking-wide transition-all active:scale-[0.98] cursor-pointer shadow-lg flex items-center justify-center gap-2';
         document.querySelectorAll('.rsvp-input').forEach((inp) => {
-          inp.className = 'rsvp-input w-full px-4 py-3 rounded-xl text-sm outline-none transition-all border bg-night-950/90 border-white/15 focus:border-emerald-400 text-white placeholder-slate-500';
+          inp.classList.remove('bg-white', 'border-champagne-200', 'focus:border-champagne-600', 'text-stone-800', 'placeholder-stone-400');
+          inp.classList.add('bg-night-950/90', 'border-white/15', 'focus:border-emerald-400', 'text-white', 'placeholder-slate-500');
         });
-        document.getElementById('rsvp-phone-hint').textContent = 'Para enviarte recordatorios importantes del evento.';
+        document.getElementById('rsvp-phone-hint').textContent = 'Acepta números de México y el extranjero (7 a 15 dígitos).';
       } else {
         card.className = 'relative w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-scale-in my-auto border bg-champagne-50 border-champagne-200 text-stone-800';
         document.getElementById('modal-event-kicker').className = 'text-[11px] uppercase tracking-[0.22em] font-bold mb-1 text-olive-600';
         document.getElementById('modal-event-title').className = 'font-serif text-2xl font-bold leading-tight text-stone-800';
         submitBtn.className = 'w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-champagne-600 to-champagne-500 hover:from-champagne-700 hover:to-champagne-600 text-white font-display font-bold text-sm tracking-wide transition-all active:scale-[0.98] cursor-pointer shadow-lg flex items-center justify-center gap-2';
         document.querySelectorAll('.rsvp-input').forEach((inp) => {
-          inp.className = 'rsvp-input w-full px-4 py-3 rounded-xl text-sm outline-none transition-all border bg-white border-champagne-200 focus:border-champagne-600 text-stone-800 placeholder-stone-400';
+          inp.classList.remove('bg-night-950/90', 'border-white/15', 'focus:border-emerald-400', 'text-white', 'placeholder-slate-500');
+          inp.classList.add('bg-white', 'border-champagne-200', 'focus:border-champagne-600', 'text-stone-800', 'placeholder-stone-400');
         });
-        document.getElementById('rsvp-phone-hint').textContent = '📲 Al escanear tu QR en la entrada, te enviaremos tu número de mesa a este WhatsApp.';
+        document.getElementById('rsvp-phone-hint').textContent = '📲 Al entrar te enviaremos tu mesa a este WhatsApp (México o extranjero).';
       }
 
       document.getElementById('modal-event-kicker').textContent = `RSVP • ${cfg.badgeLabel}`;
@@ -1186,9 +1279,10 @@
       return code;
     }
 
-    function handleRsvpSubmit(event) {
+    async function handleRsvpSubmit(event) {
       event.preventDefault();
       const guestName = document.getElementById('rsvp-name').value.trim();
+      const countryCode = document.getElementById('rsvp-country-code').value;
       const phone = document.getElementById('rsvp-phone').value.replace(/\D/g, '');
       const passesCount = parseInt(document.getElementById('rsvp-passes').value, 10) || 1;
       const message = document.getElementById('rsvp-message').value.trim();
@@ -1199,8 +1293,8 @@
         errEl.classList.remove('hidden');
         return;
       }
-      if (phone.length !== 10) {
-        errEl.textContent = 'Por favor ingresa un número de WhatsApp válido de 10 dígitos.';
+      if (phone.length < 7 || phone.length > 15) {
+        errEl.textContent = 'Ingresa un número de WhatsApp válido (entre 7 y 15 dígitos).';
         errEl.classList.remove('hidden');
         return;
       }
@@ -1215,23 +1309,26 @@
         passId,
         eventId: activeRsvpEventId,
         name: guestName,
+        countryCode,
         phone,
         passes: passesCount,
         table: assignedTable,
         message,
         createdAt: `Recién confirmado (${nowTime})`,
+        createdAtMs: Date.now(),
         checkedIn: false,
         checkedInAt: null
       };
 
-      guestsMap.set(passId, newGuest);
       lastGeneratedPassId = passId;
-      saveGuestsToStorage();
+      await persistNewGuest(newGuest);
       renderPassView(newGuest);
     }
 
     function renderPassView(guest) {
       const cfg = EVENTS_CONFIG[guest.eventId];
+      const dial = guest.countryCode || '52';
+
       document.getElementById('rsvp-step-form').classList.add('hidden');
       document.getElementById('rsvp-step-pass').classList.remove('hidden');
 
@@ -1242,8 +1339,8 @@
       document.getElementById('pass-guest-count').textContent = `${guest.passes} ${guest.passes === 1 ? 'Persona' : 'Personas'}`;
       document.getElementById('pass-code-text').textContent = guest.passId;
       document.getElementById('pass-guest-extra').textContent = guest.eventId === 'wedding'
-        ? `📲 WhatsApp: ${guest.phone} • Mesa al entrar`
-        : `📲 WhatsApp: ${guest.phone}`;
+        ? `📲 +${dial} ${guest.phone} • Mesa al entrar`
+        : `📲 +${dial} ${guest.phone}`;
 
       // Mensaje de confirmación por WhatsApp con emojis en Unicode
       const waMsg = `¡Hola! Confirmo mi asistencia a *${cfg.title}*.\n\n` +
@@ -1255,7 +1352,7 @@
       const waUrl = `https://wa.me/${cfg.hostWhatsapp}?text=${encodeURIComponent(waMsg)}`;
       document.getElementById('pass-whatsapp-link').href = waUrl;
 
-      // Generar el código QR real
+      // Generar código QR real
       const qrContainer = document.getElementById('qr-code-container');
       qrContainer.innerHTML = '';
       try {
@@ -1302,7 +1399,7 @@
 
     /**
      * =========================================================================
-     * 8. CONTROL DE ACCESO QR + ENVÍO AUTOMÁTICO DE MESA POR WHATSAPP (BODA)
+     * 8. CONTROL DE ACCESO QR + ENVÍO DE MESA POR WHATSAPP (INTERNACIONAL)
      * =========================================================================
      */
     function updateNavBadges() {
@@ -1316,16 +1413,14 @@
       renderAccessDashboard();
     }
 
-    /**
-     * Construye el enlace oficial de WhatsApp con la mesa asignada de la boda
-     */
     function buildWeddingTableWhatsAppUrl(guest) {
-     const mensaje = `¡Hola ${guest.name}! \u{1F942} Bienvenido(a) a la boda de *Sofía & Alejandro*.\n\n` +
-  `\u{2705} Tu acceso ha sido *AUTORIZADO* (${guest.passes} ${guest.passes > 1 ? 'pases' : 'pase'}).\n` +
-  `\u{1F37D}\u{FE0F} Tu mesa asignada es la *${guest.table}*.\n\n` +
-  `¡Que disfrutes muchísimo esta noche tan especial! \u{2728}`;
+      const dial = guest.countryCode || '52';
+      const mensaje = `¡Hola ${guest.name}! \u{1F942} Bienvenido(a) a la boda de *Sofía & Alejandro*.\n\n` +
+        `\u{2705} Tu acceso ha sido *AUTORIZADO* (${guest.passes} ${guest.passes > 1 ? 'pases' : 'pase'}).\n` +
+        `\u{1F37D}\u{FE0F} Tu mesa asignada es la *${guest.table}*.\n\n` +
+        `¡Que disfrutes muchísimo esta noche tan especial! \u{2728}`;
 
-return `https://wa.me/52${guest.phone}?text=${encodeURIComponent(mensaje)}`;
+      return `https://wa.me/${dial}${guest.phone}?text=${encodeURIComponent(mensaje)}`;
     }
 
     function renderAccessDashboard() {
@@ -1339,7 +1434,6 @@ return `https://wa.me/52${guest.phone}?text=${encodeURIComponent(mensaje)}`;
         }`;
       });
 
-      // Estadísticas en tiempo real
       let checkedInCount = 0;
       guestsMap.forEach((g) => {
         if (g.checkedIn) checkedInCount++;
@@ -1349,9 +1443,8 @@ return `https://wa.me/52${guest.phone}?text=${encodeURIComponent(mensaje)}`;
       document.getElementById('stat-checked-in').textContent = checkedInCount;
       document.getElementById('stat-pending').textContent = totalGuests - checkedInCount;
 
-      // Filtrado por evento y buscador
       const query = (document.getElementById('guest-search-input')?.value || '').trim().toLowerCase();
-      const guestsArray = Array.from(guestsMap.values()).reverse().filter((g) => {
+      const guestsArray = Array.from(guestsMap.values()).filter((g) => {
         const matchesTab = currentAccessFilter === 'all' || g.eventId === currentAccessFilter;
         if (!matchesTab) return false;
         if (!query) return true;
@@ -1370,8 +1463,8 @@ return `https://wa.me/52${guest.phone}?text=${encodeURIComponent(mensaje)}`;
       }
 
       listEl.innerHTML = guestsArray.map((guest) => {
-        const cfg = EVENTS_CONFIG[guest.eventId];
         const isWedding = guest.eventId === 'wedding';
+        const dial = guest.countryCode || '52';
         const waUrl = isWedding && guest.phone ? buildWeddingTableWhatsAppUrl(guest) : '';
 
         return `
@@ -1396,7 +1489,7 @@ return `https://wa.me/52${guest.phone}?text=${encodeURIComponent(mensaje)}`;
                 <span class="text-xs font-semibold text-cyan-300 flex-shrink-0">• ${guest.passes} ${guest.passes === 1 ? 'pase' : 'pases'}</span>
               </div>
 
-              <p class="text-xs text-slate-400">📱 WhatsApp: <span class="font-mono text-slate-300">${guest.phone || 'No registrado'}</span></p>
+              <p class="text-xs text-slate-400">📱 WhatsApp: <span class="font-mono text-slate-300">+${dial} ${guest.phone || 'No registrado'}</span></p>
             </div>
 
             <div class="flex flex-wrap items-center gap-2 flex-shrink-0">
@@ -1432,21 +1525,15 @@ return `https://wa.me/52${guest.phone}?text=${encodeURIComponent(mensaje)}`;
       triggerLaserScan(code);
     }
 
-    /**
-     * Ejecuta una breve animación de escaneo láser y luego valida el pase.
-     * Si es invitado de Boda válido, abre WhatsApp de inmediato para evitar bloqueo de popups.
-     */
     function triggerLaserScan(passId) {
       const normalizedId = passId.trim().toUpperCase();
       const guest = guestsMap.get(normalizedId);
       const laserBox = document.getElementById('laser-scanner-box');
       const laserText = document.getElementById('laser-status-text');
 
-      // Efecto visual breve en el visor láser
       laserBox.classList.add('ring-2', 'ring-emerald-400', 'bg-emerald-950/40');
       laserText.textContent = 'ESCANEANDO QR...';
 
-      // Abrir WhatsApp directamente en el gesto de clic si es primera entrada de Boda
       let waUrl = null;
       if (guest && !guest.checkedIn && guest.eventId === 'wedding' && guest.phone) {
         waUrl = buildWeddingTableWhatsAppUrl(guest);
@@ -1460,7 +1547,7 @@ return `https://wa.me/52${guest.phone}?text=${encodeURIComponent(mensaje)}`;
       }, 420);
     }
 
-    function completeDoorScan(normalizedId, openedWaUrl) {
+    async function completeDoorScan(normalizedId, openedWaUrl) {
       const feedbackArea = document.getElementById('scan-feedback-area');
       const guest = guestsMap.get(normalizedId);
       feedbackArea.classList.remove('hidden');
@@ -1481,7 +1568,6 @@ return `https://wa.me/52${guest.phone}?text=${encodeURIComponent(mensaje)}`;
         return;
       }
 
-      // Caso: PASE YA UTILIZADO / DUPLICADO
       if (guest.checkedIn) {
         feedbackArea.innerHTML = `
           <div class="rounded-2xl p-5 bg-rose-600/20 border-2 border-rose-500 text-rose-100 shadow-lg shadow-rose-600/20 animate-shake-alert flex items-start justify-between gap-4">
@@ -1502,14 +1588,12 @@ return `https://wa.me/52${guest.phone}?text=${encodeURIComponent(mensaje)}`;
         return;
       }
 
-      // Caso: PRIMERA LECTURA VÁLIDA -> ACCESO AUTORIZADO
       const checkInTime = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-      guest.checkedIn = true;
-      guest.checkedInAt = checkInTime;
-      saveGuestsToStorage();
+      await persistCheckIn(guest.passId, checkInTime);
 
       const cfg = EVENTS_CONFIG[guest.eventId];
       const isWedding = guest.eventId === 'wedding';
+      const dial = guest.countryCode || '52';
       const fallbackWaUrl = openedWaUrl || (isWedding && guest.phone ? buildWeddingTableWhatsAppUrl(guest) : null);
 
       feedbackArea.innerHTML = `
@@ -1535,7 +1619,7 @@ return `https://wa.me/52${guest.phone}?text=${encodeURIComponent(mensaje)}`;
           ${fallbackWaUrl ? `
             <div class="pt-3 border-t border-emerald-400/25 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <p class="text-xs text-emerald-100">
-                📲 WhatsApp listo para enviar <strong>${guest.table}</strong> al número <span class="font-mono">${guest.phone}</span>.
+                📲 WhatsApp listo para enviar <strong>${guest.table}</strong> al número <span class="font-mono">+${dial} ${guest.phone}</span>.
               </p>
               <a href="${fallbackWaUrl}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-night-950 font-display font-extrabold text-xs text-center transition shadow-md flex-shrink-0">
                 📲 Enviar/Reenviar Mesa por WhatsApp
@@ -1553,7 +1637,6 @@ return `https://wa.me/52${guest.phone}?text=${encodeURIComponent(mensaje)}`;
       document.getElementById('scan-feedback-area').classList.add('hidden');
     }
 
-    // Cerrar modal al hacer clic fuera o presionar Escape
     document.getElementById('rsvp-modal').addEventListener('click', (e) => {
       if (e.target.id === 'rsvp-modal') closeRsvpModal();
     });
@@ -1567,12 +1650,11 @@ return `https://wa.me/52${guest.phone}?text=${encodeURIComponent(mensaje)}`;
      * =========================================================================
      */
     window.addEventListener('DOMContentLoaded', () => {
-      loadGuestsFromStorage();
       hydrateEventsUI();
-      updateNavBadges();
       updateCountdowns();
       setInterval(updateCountdowns, 1000);
       initVipParticles();
+      initDatabase();
       switchView('birthday');
     });
   </script>
