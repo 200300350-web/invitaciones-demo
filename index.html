@@ -1350,7 +1350,7 @@
         `\u{1F511} Código de acceso: ${guest.passId}` +
         `${guest.message ? `\n\u{1F4AC} Mensaje: ${guest.message}` : ''}`;
 
-      const waUrl = `https://wa.me/${cfg.hostWhatsapp}?text=${encodeURIComponent(waMsg)}`;
+     const waUrl = `https://api.whatsapp.com/send?phone=${cfg.hostWhatsapp}&text=${encodeURIComponent(waMsg)}`;
       document.getElementById('pass-whatsapp-link').href = waUrl;
 
       // Generar código QR real
@@ -1421,7 +1421,7 @@
         `\u{1F37D}\u{FE0F} Tu mesa asignada es la *${guest.table}*.\n\n` +
         `¡Que disfrutes muchísimo esta noche tan especial! \u{2728}`;
 
-      return `https://wa.me/${dial}${guest.phone}?text=${encodeURIComponent(mensaje)}`;
+      return `https://api.whatsapp.com/send?phone=${dial}${guest.phone}&text=${encodeURIComponent(mensaje)}`;
     }
 
     function renderAccessDashboard() {
